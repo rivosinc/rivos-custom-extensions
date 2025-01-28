@@ -1,0 +1,41 @@
+version = 1
+
+# Generally declare all files by this
+[[annotations]]
+path = [
+    ".**",
+    "**",
+]
+SPDX-FileCopyrightText  = "© RISC-V International"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# Makefile has different license
+[[annotations]]
+path = [
+    "Makefile",
+]
+SPDX-FileCopyrightText  = "© RISC-V International"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+# Different copyright for Rivos written content
+[[annotations]]
+path = [
+    "README.adoc",
+    "src/document-meta.adoc",
+    "src/intro.adoc",
+    "src/xrivosvisni.adoc",
+    "src/xrivosvizip.adoc",
+]
+SPDX-FileCopyrightText  = "(c) 2025 Rivos Inc."
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# Based off RVI template but modified by Rivos
+[[annotations]]
+path = [
+    "src/rivos-vendor-extensions.adoc",
+]
+SPDX-FileCopyrightText  = [
+    "© RISC-V International",
+    "(c) 2025 Rivos Inc."
+]
+SPDX-License-Identifier = "CC-BY-4.0"

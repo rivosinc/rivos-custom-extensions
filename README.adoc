@@ -1,0 +1,7 @@
+= Rivos Custom Extension Specification
+
+This repository provides the public specification of the RISCV vendor extensions defined by Rivos Inc.
+
+== License
+
+This work is licensed under a Creative Commons Attribution 4.0 International License (CC-BY-4.0), except for the Makefile which is under CC-BY-SA-4.0. For details, see the link:REUSE.toml[REUSE.toml] file.

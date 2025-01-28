@@ -1,0 +1,21 @@
+[[intro]]
+== Introduction
+
+The Rivos custom vendor extensions exist to supplement the standard RISC-V extension ecosystem.
+
+=== Overview of Extensions
+
+The document currently describes the following extensions:
+
+* <<xrivosvizip,XRivosVizip>>
+* <<xrivosvisni,XRivosVisni>>
+
+=== Life Cycle of an Extension
+
+The lifecycle of each extension is defined on a per-extension basis and can be fond in the relevant sub-section.
+
+The possible states are:
+
+* Experimental - Extension specification is an early draft.  Everything may change.
+* Stable - Encodings and functionality will not change.  Clarifications may be made as needed.
+

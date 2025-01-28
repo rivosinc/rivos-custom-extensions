@@ -1,0 +1,51 @@
+= Rivos Custom (Vendor) Extensions
+Authors: Philip Reames
+include::../docs-resources/global-config.adoc[]
+:docgroup: 
+:description: 
+:revdate: 
+:revnumber: 0.1
+:revremark:
+:revinfo:
+:preface-title: Preamble
+:colophon:
+:appendix-caption: Appendix
+// https://docs.asciidoctor.org/asciidoc/latest/macros/images-directory/
+:imagesdir: ../docs-resources/images
+// Settings:
+:experimental:
+:reproducible:
+//:WaveDromEditorApp: app/wavedrom-editor.app
+:imagesoutdir: images
+//:srcdir: src
+:bibtex-file: src/example.bib
+:bibtex-order: alphabetical
+:bibtex-style: apa
+:icons: font
+:lang: en
+:listing-caption: Listing
+:sectnums:
+:toc: left
+:toclevels: 4
+:source-highlighter: pygments
+ifdef::backend-pdf[]
+:source-highlighter: coderay
+endif::[]
+:data-uri:
+:hide-uri-scheme:
+:stem: latexmath
+:footnote:
+:xrefstyle: short
+
+include::document-meta.adoc[]
+include::intro.adoc[]
+
+include::xrivosvizip.adoc[]
+include::xrivosvisni.adoc[]
+
+// Fails to build if there are currently no listings/tables in document
+//include::listings.adoc[]
+
+// The index must precede the bibliography
+//include::index.adoc[]
+//include::bibliography.adoc[]

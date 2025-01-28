@@ -1,0 +1,212 @@
+[[xrivosvizip]]
+== Vector Register Zips (XRivosVizip)
+
+The XRivosVizip extension defines a set of instructions used to combine lanes from multiple vector registers with important patterns that allow for efficient specialisation. They complement mechanisms for reshuffling data (such as vlseg, vrgather, vslideup/down) and remove the need for passing through memory, changing the LMUL, or setting up masks. This addresses use cases from application areas as varied as signal processing, high-throughput AI, and high-performance computing. 
+
+=== Life Cycle
+
+This extension is currently *EXPERIMENTAL*.  It is currently at version 0.1.  A variant of this extension has been proposed as a fast-track for RVI.
+
+=== Motivation and use cases
+
+The XRivosVizip instructions help in the reordering of structured data in vector registers. Examples of where this is useful include:
+
+* Reading real / imaginary components from a stream of complex numbers (occurs frequently in communication systems)
+* Unpacking of data structures of small powers of two (e.g. RGBA tuples)
+* Transposing of small matrices, where different rows are held in vector registers. This in turn can be used iteratively to transpose larger matrices, and is of utility for the smallest and largest matrices we can have
+
+The RVV (RISC-V Vector extension) v1.0 standard provides instructions for moving data in registers, but the instructions are general and can require reading data from memory, constructing additional input data in registers, or restricting instruction-level parallelism. Specialized instructions allow for hardware to provide more optimal implementations.
+
+The following examples help to illustrate common use cases.
+
+==== Matrix Transpose
+
+An example of where rv.vzip{even,odd}.vv can be used is in matrix transposition, where the values in a vector register can be thought of as rows in a matrix on input, and the columns of a matrix on output. An example of a 4x4 matrix of 32-bit elements with vlen = 128 is given below. This can be iterated over with different inputs to perform the matrix transpose of larger matrices.
+
+[source]
+----
+// Assume that v1, v2, v3, v4 hold the data for a 4x4 matrix
+// LMUL=1, SEW=32, vl = 4, ta, ma to start with
+vsetivli zero, 4, e32, m1, ta, ma
+rv.vzipeven.vv v5, v1, v2
+rv.vzipodd.vv v6, v1, v2
+rv.vzipeven.vv v7, v3, v4
+rv.vzipodd.vv v8, v3, v4
+
+vsetivli zero, 2, e64, m1, ta, ma
+rv.vzipeven.vv v1, v5, v7
+rv.vzipeven.vv v2, v6, v8
+rv.vzipodd.vv v3, v5, v7
+rv.vzipodd.vv v4, v6, v8
+----
+
+To undo the rv.vzip{even,odd}.vv operation, we need only rv.vzip{even,odd}.vv operations.
+
+==== Complex Multiplication
+
+An example of where rv.vunzip2{a,b}.vv is useful is in the complex multiplication of numbers. The example below shows how to perform the pairwise multiplication of complex numbers, unpacking the data with an rv.vunzip2{a,b}.vv. We assume 128-bit vlen and 32-bit SEW
+
+[source]
+----
+// v1, v2 have complex numbers [a0r, a0i, a1r, a1i], [a2r, a2i, a3r, a3i]
+// v3, v4 have complex numbers [b0r, b0i, b1r, b1i], [b2r, b2i, b3r, b3i]
+// We want to perform operations to compute (akr * bkr - aki * bki) + j(akr * bki + aki * bkr)
+vsetivli zero, 4, e32, m1, ta, ma
+rv.vunzip2a.vv v5, v1, v2  // a real
+rv.vunzip2b.vv v6, v1, v2  // a imaginary
+rv.vunzip2a.vv v7, v3, v4  // b real
+rv.vunzip2b.vv v8, v3, v4  // b imaginary
+
+// v9 and v10 will have real and imaginary components of the multiplication
+vfmul.vv v9, v7, v5
+vfnmsac.vv v9, v8, v6
+vfmul.vv v10, v8, v5
+vfmacc.vv v10, v7, v6
+----
+
+To pack the data again, the rv.vzip2{a,b}.vv instructions are required. Note that this operation is moving from an array-of-structs to a struct-of-arrays. We can unpack data quite simply for 2, 4 and 8 element structs by increasing SEW between calls to rv.vunzip2{a,b}. This is analogous to segmented loads, which load structured data from memory. The segmented load is an expensive method for unpacking data in the case that data already exists in registers, as a write to memory would be required before a read. Other options, such as a vrgather with a fixed pattern are also possible to achieve this interleave, but this approach is not vector-length agnostic (the pattern depends on the number of elements in a vector). Use of vrgather also increases setup time and register pressure, due to the extra registers populated and used by vrgather indices. Masked vslideup/down can also be used, but the masking introduces tight dependencies between instructions, meaning instruction-level parallelism is restricted.
+
+==== Interleave in Registers
+
+An example of where rv.vzip2{a,b}.vv is useful is in packing rgba components back into a single stream. The example below shows how to perform the packing of 16-bit rgba data. We assume 128-bit vlen and 16-bit SEW.
+
+[source]
+----
+// v1 red, v2 green, v3 blue, v4 alpha
+vsetivli zero, 8, e16, m1, ta, ma
+rv.vzip2a.vv v5, v1, v2                // [r0, g0, r1, g1, r2, g2, r3, g3]
+rv.vzip2b.vv v6, v1, v2                // [r4, g4, r5, g5, r6, g6, r7, g7]
+rv.vzip2a.vv v7, v3, v4                // [b0, a0, b1, a1, b2, a2, b3, a3]
+rv.vzip2b.vv v8, v3, v4                // [b4, a4, b5, a5, b6, a6, b7, a7]
+
+vsetivli zero, 4, e32, m1, ta, ma
+rv.vzip2a.vv v1, v5, v7                // [r0, g0, b0, a0, r1, g1, b1, a1]
+rv.vzip2b.vv v2, v5, v7                // [r2, g2, b2, a2, r3, g3, b3, a3]
+rv.vzip2a.vv v3, v6, v8                // [r4, g4, b4, a4, r5, g5, b5, a5]
+rv.vzip2b.vv v4, v6, v8                // [r6, g6, b6, a6, r7, g7, b7, a7]
+----
+
+This operation is analogous to segmented stores, but the destination of the operation ends up in registers rather than memory. When the result is required in registers, the segmented store is an expensive way to pack the data, as it needs to be written to and then read from memory again. Other options for packing are to use a vrgather with a fixed pattern, but again this is not vector-length agnostic, and it incurs extra setup cost and increases register pressure. Masked vslideup/down can also be used, but the masking introduces tight dependencies between instructions, meaning instruction-level parallelism is restricted.
+
+=== Specification
+
+All instructions in this extension have a vector destination register, and two vector source registers (vs2 and vs1). The source registers may overlap with each other, but not with the destination register, i.e. vd != vs1 and vd != vs2.
+
+The instruction encodings have the following form
+
+[wavedrom,,svg]
+....
+{reg: [
+  {bits: 7, name: 0x5b, attr: 'CUSTOM_2 (0b1011011)'},
+  {bits: 5, name: 'vd'},
+  {bits: 3, name: 0},
+  {bits: 5, name: 'vs1'},
+  {bits: 5, name: 'vs2'},
+  {bits: 1, name: 'vm'},
+  {bits: 6, name: 'funct6'},
+]}
+....
+
+This is analogous to the standard OPIVV format except placed in the CUSTOM_2 major opcode, with the following funct6 values: rv.vzipeven.vv (funct6 = 0b001100), rv.vzipodd.vv (0b011100), rv.vzip2a.vv (0b000100), rv.vzip2b.vv (0b010100), rv.vunzip2a.vv (0b001000), rv.vunzip2b.vv (0b011000).
+
+VL describes the number of output elements written by the instruction.  Any elements past VL are handled according to the tail policy.  The instructions support both masked (vm = 0) and unmasked (vm = 1) variants, and inactive elements are handled according to the mask policy. VSTART is defined with regards to the destination elements in the usual manner.
+
+==== rv.vzipeven.vv, rv.vzipodd.vv
+
+Synopsis::
+
+The rv.vzipeven.vv (rv.vzipodd.vv) instruction takes packed structures with two fields, which we call `a` and `b`, and interleaves all `a` (`b`) elements in the destination register group.
+
+Mnemonic::
+====
+rv.vzipeven.vv _vd_, _vs2_, _vs1_. _vm_
+
+rv.vzipodd.vv _vd_, _vs2_, _vs1_. _vm_
+====
+
+Description::
+The operation is shown in the pseudo-sail code below
++
+[source]
+----
+let num_elem = VL; /* VL <= VLMAX = VLEN * LMUL / SEW */
+let vs2_offset = if (funct6 == rv.vzipeven.vv) then 0 else 1;
+let vs1_offset = if (funct6 == rv.vzipeven.vv) then -1 else 0;
+foreach (i from 0 to (num_elem - 1)) {
+    result[i] = match (i % 2) {
+        0 => vs2_val[i + vs2_offset],
+        1 => vs1_val[i + vs1_offset],
+    }
+}
+// follow mask policy for inactive elements
+// follow tail policy for tail elements
+----
++
+Note that rv.vzipodd.vv can read one element past VL in vs2 if VL is odd.
+
+==== rv.vunzip2a.vv, rv.vunzip2b.vv
+
+Synopsis::
+The operation of rv.vunzip2a (rv.vunzip2b) takes the even (odd) numbered lanes from the conceptual concatenation of vlmax elements from each of the two input register groups.
+
+Mnemonic::
+====
+rv.vunzip2a.vv _vd_, _vs2_, _vs1_. _vm_
+
+rv.vunzip2b.vv _vd_, _vs2_, _vs1_. _vm_
+====
+
+Description::
+rv.vunzip2a.vv (rv.vunzip2b.vv) extracts the even (odd) elements from the, conceptual, concatenation of two source registers.  When performing the concatenation, VLMAX elements are taken from each source regardless of the value of VL.  As a result, these instructions can read elements past VL in vs2 (analogous to vrgather).
++
+The following pseudo-sail code describes the operation of the instruction:
++
+[source]
+----
+let num_elem = VL; /* VL <= VLMAX = VLEN * LMUL / SEW */
+let half_ind = if (funct6 == rv.vunzip2a.vv) ((VLMAX + 1) / 2) else (VLMAX / 2);
+let offset = if (funct6 == rv.vunzip2a.vv) then 0 else 1;
+foreach (i from 0 to (num_elem - 1)) {
+    let ind = (2 * i + offset) % VLMAX;
+    result[i] = if (i < half_index) then vs2_val[ind] else vs1_val[ind];
+}
+// follow mask policy for inactive elements
+// follow tail policy for tail elements
+----
+
+==== rv.vzip2a.vv, rv.vzip2b.vv
+
+The rv.vzip2{a,b}.vv instructions are useful for repacking structured data, where different fields are stored in different registers. 
+
+Synopsis::
+The rv.vzip2a.vv (rv.vzip2b.vv) instruction takes the elements from the low (high) half of the vs2 and vs1 register groups, respectively, and writes alternating elements to the start of vd. 
+
+Mnemonic::
+====
+rv.vzip2a.vv _vd_, _vs2_, _vs1_. _vm_
+
+rv.vzip2b.vv _vd_, _vs2_, _vs1_. _vm_
+====
+
+Description::
+The following pseudo-sail code describes the operation of the instruction:
++
+[source]
+----
+let num_elem = VL; /* VL <= VLMAX = VLEN * LMUL / SEW */
+let offset = if (funct6 == rv.vzip2a.vv) then 0 else (VLMAX / 2);
+foreach (i from 0 to num_elem - 1) {
+    let ind = floor(i / 2) + offset;
+    let src = if (funct6 == rv.vzip2a.vv) then (i % 2) else ((i + VLMAX) % 2);
+    result[i] = match (src) {
+        0 => vs2_val[ind],
+        1 => vs1_val[ind],
+    }
+}
+// follow mask policy for inactive elements
+// follow tail policy for tail elements
+----
++
+The number of elements read from the sources are ceil(VL/2) and floor(VL/2) respectively.  Note that the starting offset for those reads differ between rv.vzip2a.vv and rv.vzip2b.vv, and that rv.vzip2b.vv may read past VL in both sources.
+
+
