@@ -90,7 +90,7 @@ This operation is analogous to segmented stores, but the destination of the oper
 
 === Specification
 
-All instructions in this extension have a vector destination register, and two vector source registers (vs2 and vs1). The source registers may overlap with each other, but not with the destination register, i.e. vd != vs1 and vd != vs2.
+All instructions in this extension have a vector destination register, two vector source registers (vs2 and vs1), and (optionally) a mask register (v0). The source and mask registers may overlap with each other, but not with the destination register, i.e. vd != vs1, vd != vs2 and vd != v0 (if masked).
 
 The instruction encodings have the following form
 
