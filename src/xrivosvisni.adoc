@@ -9,14 +9,14 @@ This extension is currently *EXPERIMENTAL*.  It is currently at version 0.1.
 
 === Specification
 
-==== rv.vzero.v
+==== ri.vzero.v
 
 Synopsis::
-The rv.vzero.v instruction unconditionally zeroes vector register _vd_.
+The ri.vzero.v instruction unconditionally zeroes vector register _vd_.
 
 Mnemonic::
 ====
-rv.vzero.v _vd_
+ri.vzero.v _vd_
 ====
 
 Encoding::
@@ -36,14 +36,14 @@ Encoding::
 Description::
 This instruction zeroes exactly one vector register (not register group), with EEW=e8, EMUL=m1, and EVL=VLMAX.  The instruction can not be masked. This instruction ignores VTYPE.VILL.  This means the instructions results do not depend on the values of the VL or VTYPE registers.  In particular, this instruction zeros the result even if VL=0.  VSTART behaves in the usual manner.
 
-==== rv.vinsert.v.x
+==== ri.vinsert.v.x
 
 Synopsis::
-The rv.vinsert.v.x instruction inserts a scalar value into a lane of a vector specified by an immediate.
+The ri.vinsert.v.x instruction inserts a scalar value into a lane of a vector specified by an immediate.
 
 Mnemonic::
 ====
-rv.vinsert.v.x _vd_, _rs1_, uimm5
+ri.vinsert.v.x _vd_, _rs1_, uimm5
 ====
 
 Encoding::
@@ -65,21 +65,21 @@ Inserts a value from a scalar register into a vector register group, at the inde
 +
 Allowed to write past vl, except if vl=0 in which case it has no effect. (Done for consistency with vmv.s.x).  Writing an index past VLMAX has no effect.
 +
-The rv.insert.v.x (like vmv.s.x) instruction copies the scalar integer register to element uimm5 of the destination vector register. If SEW < XLEN, the least-significant bits are copied and the upper XLEN-SEW bits are ignored. If SEW > XLEN, the value is sign-extended to SEW bits.
+The ri.vinsert.v.x (like vmv.s.x) instruction copies the scalar integer register to element uimm5 of the destination vector register. If SEW < XLEN, the least-significant bits are copied and the upper XLEN-SEW bits are ignored. If SEW > XLEN, the value is sign-extended to SEW bits.
 
 Notes::
 Unlike vmv.s.x this instruction respects LMUL.
 +
 Only a GPR-source variant is provided.  A future extension may provide a FPR-source variant.
 
-==== rv.vextract.x.v
+==== ri.vextract.x.v
 
 Synopsis::
-The rv.vextract.x.v instruction extracts a scalar value from a lane of a vector specified by an immediate.
+The ri.vextract.x.v instruction extracts a scalar value from a lane of a vector specified by an immediate.
 
 Mnemonic::
 ====
-rv.vextract.x.v _rd_, _vs2_, uimm5
+ri.vextract.x.v _rd_, _vs2_, uimm5
 ====
 
 Custom Encoding::
@@ -100,9 +100,9 @@ Custom Encoding::
 Description::
 Extracts an element from a vector register group at the index given by uimm5 (0-31). Allowed to read past vl; reads past vlmax give a zero result.
 +
-The rv.vextract.x.v instruction copies a single SEW-wide element from index uimm5 of the source vector register to a destination integer register. If SEW > XLEN, the least-significant XLEN bits are transferred and the upper SEW-XLEN bits are ignored. If SEW < XLEN, the value is sign-extended to XLEN bits.
+The ri.vextract.x.v instruction copies a single SEW-wide element from index uimm5 of the source vector register to a destination integer register. If SEW > XLEN, the least-significant XLEN bits are transferred and the upper SEW-XLEN bits are ignored. If SEW < XLEN, the value is sign-extended to XLEN bits.
 +
-rv.vextract (like vmv.x.s) performs its operation even if vstart ≥ vl or vl=0. 
+ri.vextract (like vmv.x.s) performs its operation even if vstart ≥ vl or vl=0. 
 
 Note::
 Unlike vmv.x.s this instruction respects LMUL.

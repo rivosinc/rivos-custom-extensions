@@ -7,8 +7,16 @@ The Rivos custom vendor extensions exist to supplement the standard RISC-V exten
 
 The document currently describes the following extensions:
 
-* <<xrivosvizip,XRivosVizip>>
-* <<xrivosvisni,XRivosVisni>>
+* <<xrivosvizip,Vector Register Zips (XRivosVizip)>>
+* <<xrivosvisni,Vector Integer Small New Instructions (XRivosVisni)>>
+
+=== Assembly mnemonic and extension naming conventions
+
+Rivos uses the "ri." prefix for the vendor specific prefix.  A previous version of this document had used "rv.", but this was changed before any extension left Experimental status.
+
+For extension naming, Rivos follows the "X" + "Vendor" + "Extension Name" scheme.  The names which would result from the alternate "X" + "Vendor Prefix" + "Extension Name" scheme are explicitly reserved.  For example, the vector register zips extension is named XRivosVizip, not XRiVizip.
+
+Please see https://github.com/riscv-non-isa/riscv-toolchain-conventions for context.
 
 === Life Cycle of an Extension
 
