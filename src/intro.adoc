@@ -20,7 +20,7 @@ Please see https://github.com/riscv-non-isa/riscv-toolchain-conventions for cont
 
 === Life Cycle of an Extension
 
-The lifecycle of each extension is defined on a per-extension basis and can be fond in the relevant sub-section.
+The lifecycle of each extension is defined on a per-extension basis and can be found in the relevant sub-section.
 
 The possible states are:
 
